@@ -5,7 +5,7 @@ MU_MASS = 0.1057 # GeV
 MU_TAU = 2.2 # us
 C_M_PER_US = 299.792 # m / us
 
-# Two types of possible muon beam configurations:
+# Three types of possible muon beam configurations:
 #
 # 1) A section of the accelerator points at the target. 
 #    In this case, the rate is equal to the rotation rate
@@ -14,6 +14,9 @@ C_M_PER_US = 299.792 # m / us
 # 2) The beam dump points at the target. In this case, the
 #    rate is equal to the repition rate (assuming the rate
 #    of muons in is equal to the rate of muons out).
+# 
+# 3) A baseline of 5e15 muon decays. This reproduces both
+#    configurations within the order of magnitude
 
 # Parameters taken from: https://arxiv.org/abs/2407.12450
 # Tables 1.1 and 6.4
@@ -24,25 +27,46 @@ S2YR = 525600.*60. # moments so dear...
 TIME = S2YR*1 # one year
 CIRCUMFERENCE = 10e3 # m
 
-def numu_flux_accelerator(Emuon, Lmuon, Pmuon, enu, costhlab, baseline):
-    return nu_flux_accelerator(numu_flux, Lmuon, Pmuon, enu, costhlab, baseline)
-def nue_flux_accelerator(Emuon, Lmuon, Pmuon, enu, costhlab, baseline):
-    return nu_flux_accelerator(nue_flux, Lmuon, Pmuon, enu, costhlab, baseline)
+# Numbers for the straight section
+# 
+# For the accelerator case, straight sections are quoted as 30 cm
+# in the above paper. The accelerator can't always point at the
+# same location due to radiation concerns. Let's say we get it pointed
+# at the telescope 1% of the time.
+STRAIGHT_SECTION_ACCELERATOR = 0.3*0.01 # m
 
-def numu_flux_dump(Emuon, Lmuon, Pmuon, enu, costhlab, baseline):
-    return nu_flux_dump(numu_flux, Lmuon, Pmuon, enu, costhlab, baseline)
-def nue_flux_dump(Emuon, Lmuon, Pmuon, enu, costhlab, baseline):
-    return nu_flux_dump(nue_flux, Lmuon, Pmuon, enu, costhlab, baseline)
+# For the dump, we probably get a bigger length to work with. Let's
+# say it's 10 m long
+STRAIGHT_SECTION_DUMP = 10 # m
 
-def nu_flux_accelerator(fluxf, Emuon, Lmuon, Pmuon, enu, costhlab, baseline):
+def numu_flux_accelerator(Emuon, Pmuon, enu, costhlab, baseline):
+    return nu_flux_accelerator(numu_flux, Emuon, Pmuon, enu, costhlab, baseline)
+def nue_flux_accelerator(Emuon, Pmuon, enu, costhlab, baseline):
+    return nu_flux_accelerator(nue_flux, Emuon, Pmuon, enu, costhlab, baseline)
+
+def numu_flux_dump(Emuon, Pmuon, enu, costhlab, baseline):
+    return nu_flux_dump(numu_flux, Emuon, Pmuon, enu, costhlab, baseline)
+def nue_flux_dump(Emuon, Pmuon, enu, costhlab, baseline):
+    return nu_flux_dump(nue_flux, Emuon, Pmuon, enu, costhlab, baseline)
+
+def numu_flux_baseline(Emuon, Pmuon, enu, costhlab, baseline):
+    return nu_flux_baseline(numu_flux, Emuon, Pmuon, enu, costhlab, baseline)
+def nue_flux_baseline(Emuon, Pmuon, enu, costhlab, baseline):
+    return nu_flux_baseline(nue_flux, Emuon, Pmuon, enu, costhlab, baseline)
+
+def nu_flux_accelerator(fluxf, Emuon, Pmuon, enu, costhlab, baseline):
     G = Emuon / MU_MASS
-    Nmuon = MU_PER_BUNCH*(C_M_PER_US/CIRCUMFERENCE)*S2YR*(Lmuon/C_M_PER_US)/(MU_TAU*G) 
+    Nmuon = MU_PER_BUNCH*(C_M_PER_US/CIRCUMFERENCE)*S2YR*(Lmuon/C_M_PER_US)/(MU_TAU*G)*STRAIGHT_SECTION_ACCELERATOR 
     return fluxf(Emuon, Nmuon, Pmuon, enu, costhlab, baseline)
 
-def nu_flux_dump(fluxf, Emuon, Lmuon, Pmuon, enu, costhlab, baseline):
+def nu_flux_dump(fluxf, Emuon, Pmuon, enu, costhlab, baseline):
     G = Emuon / MU_MASS
-    Nmuon = MU_PER_BUNCH*REPRATE*S2YR*(Lmuon/C_M_PER_US)/(MU_TAU*G)
+    Nmuon = MU_PER_BUNCH*REPRATE*S2YR*(Lmuon/C_M_PER_US)/(MU_TAU*G)*STRAIGHT_SECTION_DUMP
     return fluxf(Emuon, Nmuon, Pmuon, enu, costhlab, baseline)
+
+def nu_flux_baseline(fluxf, Emuon, Pmuon, enu, costhlab, baseline):
+    Nmuon_baseline = 5e15
+    return fluxf(Emuon, Nmuon_baseline, Pmuon, enu, costhlab, baseline)
 
 def costhcm_v(Emuon, costhlab):
     G = Emuon/MU_MASS

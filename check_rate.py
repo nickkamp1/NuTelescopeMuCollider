@@ -2,17 +2,21 @@ from flux import *
 from xsec import *
 
 Etest = 1e3 # GeV
-
-
-
 Gtest = Etest / MU_MASS
 
 # Dump
+
+# Making this number up
 Lmuontest = 10 # m
+
 Nmuon_dump = MU_PER_BUNCH*REPRATE*S2YR*(Lmuontest/C_M_PER_US)/(MU_TAU*Gtest)
 
 # Accelerator
-Lmuontest = 0.3*0.01 # m 
+
+# 30cm straight section from https://arxiv.org/abs/2407.12450, pointed
+# at the telescope 1% of the time (making that up)
+Lmuontest = 0.3*0.01 # m
+
 Nmuon_accelerator = MU_PER_BUNCH*(1e6*C_M_PER_US/CIRCUMFERENCE)*S2YR*(Lmuontest/C_M_PER_US)/(MU_TAU*Gtest)
 
 print("Number of muons [e12]:", Nmuon_dump/1e12, Nmuon_accelerator/1e12)

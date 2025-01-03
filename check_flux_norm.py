@@ -2,7 +2,7 @@ import numpy as np
 from scipy.integrate import quad, nquad
 import flux
 
-Emu = 1000 # GeV
+Emu = 100 # GeV
 Pmu = 1 # Polarization
 
 def integrand(fluxf, Enu, costh):
