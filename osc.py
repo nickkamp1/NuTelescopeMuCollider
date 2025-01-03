@@ -25,7 +25,11 @@ deltaCP0 = 0.
 
 def oscillate(E, baseline, nuind, nusign, dL=1e2, # m 
               rhoset=None, rhoshift=0, rhoscale=1,
-              th12=th12, th23=th23, th13=th13, dm21=dm21, dm31=dm31, deltaCP=0,
+              # three-neutrino oscillations
+              th12=th12, th23=th23, th13=th13, dm21=dm21, dm31=dm31,
+              # sterile neutrino
+              th14=0, th24=0, th34=0, dm41=0,
+              # anomalous matter potential
               epsee=0, epsemu=0, epsetau=0, epsmumu=0, epsmutau=0, epstautau=0):
 
     if isinstance(E, float) or isinstance(E, int):
@@ -34,23 +38,31 @@ def oscillate(E, baseline, nuind, nusign, dL=1e2, # m
     c12 = np.cos(th12)
     c23 = np.cos(th23)
     c13 = np.cos(th13)
+    c14 = np.cos(th14)
+    c24 = np.cos(th24)
+    c34 = np.cos(th34)
+
     s12 = np.sin(th12)
     s23 = np.sin(th23)
     s13 = np.sin(th13)
+    s14 = np.sin(th14)
+    s24 = np.sin(th24)
+    s34 = np.sin(th34)
     
-    # Vacuum oscillations
-    U = np.array(
-    [
-        [c13*c12, c13*s12, s13*np.exp(-1j*deltaCP)],
-        [-c23*s12-s13*s23*c12*np.exp(1j*deltaCP), c23*c12-s13*s23*s12*np.exp(1j*deltaCP), c13*s23],
-        [s23*s12-s13*c23*c12*np.exp(1j*deltaCP), -s23*c12-s13*c23*s12*np.exp(1j*deltaCP), c13*c23]
+    # Vacuum oscillations -- from https://arxiv.org/pdf/hep-ph/0209097
+    U = np.array([
+	[c12*c13*c14,	c13*c14*s12,	c14*s13,	s14],
+	[-c23*c24*s12 -c12*c24*s13*s23 -c12*c13*s14*s24,	c12*c23*c24 -c24*s12*s13*s23 -c13*s12*s14*s24,	c13*c24*s23 -s13*s14*s24,	c14*s24],
+	[-c12*c23*c34*s13 +c34*s12*s23 -c12*c13*c24*s14*s34 +c23*s12*s24*s34 +c12*s13*s23*s24*s34,	-c23*c34*s12*s13 -c12*c34*s23 -c13*c24*s12*s14*s34 -c12*c23*s24*s34 +s12*s13*s23*s24*s34,	c13*c23*c34 -c24*s13*s14*s34 -c13*s23*s24*s34,	c14*c24*s34],
+	[-c12*c13*c24*c34*s14 +c23*c34*s12*s24 +c12*c34*s13*s23*s24 +c12*c23*s13*s34 -s12*s23*s34,	-c13*c24*c34*s12*s14 -c12*c23*c34*s24 +c34*s12*s13*s23*s24 +c23*s12*s13*s34 +c12*s23*s34,	-c24*c34*s13*s14 -c13*c34*s23*s24 -c13*c23*s34,	c14*c24*c34]
     ])
+
     # Matter Potential
-    # TODO: What is going on with this factor if 2?
-    MP = 2*nusign*np.array([
-        [1+epsee, epsemu, epsetau],
-        [np.conj(epsemu), epsmumu, epsmutau],
-        [np.conj(epsetau), np.conj(epsmutau), epstautau]
+    MP = nusign*np.array([
+        [1-0.5+epsee, epsemu, epsetau, 0],
+        [np.conj(epsemu), -0.5+epsmumu, epsmutau, 0],
+        [np.conj(epsetau), np.conj(epsmutau), -0.5+epstautau, 0],
+        [0, 0, 0, 0]
     ])
 
     if nusign < 0:
@@ -67,4 +79,4 @@ def oscillate(E, baseline, nuind, nusign, dL=1e2, # m
     density += rhoshift
     density *= rhoscale
     
-    return oschelper.do_osc(E, steps, density, U, MP, dm21, dm31, nuind, dL)
+    return oschelper.do_osc(E, steps, density, U, MP, dm21, dm31, dm41, nuind, dL)
