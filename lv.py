@@ -1,4 +1,10 @@
 import numpy as np
+import matplotlib.pyplot as plt
+
+
+####################
+# Global Variables
+####################
 
 # Neutrino oscillation parameters
 th12 = 33.44 *np.pi/180
@@ -22,7 +28,64 @@ nucleon_mass_density_to_electron_number_density = Ye * NA * hbarc**3 # nucleons 
 DPdepth = np.genfromtxt("DensityProfileDepthAK135.txt")
 DPdensity = np.genfromtxt("DensityProfileDensityAK135.txt")
 
+
+# Possible Baselines
+
+# ICECUBE
+
+# Radius of earth
+R_earth = 6371.0 # km
+
+# Chicago latitude
+lat = 41.88
+
+# Baseline, approx sphere
+alpha = ((90 - lat)/2)*np.pi/180
+ICECUBE_BASELINE = np.sqrt(2*R_earth**2*(1 - np.cos((90+lat)*np.pi/180)))*1e3 # meters
+# Others
+PONE_BASELINE = 1758*1.60934*1e3
+KM3NeT_BASELINE = 4427*1.60934*1e3
+
+# 500 mega-tonne mass, baseline
+MASS = 500e6
+
+# density of water
+DENSITY = 1 # t / m^3
+
+VOLUME = MASS / DENSITY
+RADIUS = np.power(VOLUME/((4./3.)*np.pi), 1./3.)
+Emuon = 5e3
+
+# Unpolarized
+P = 0
+
 deltaCP0 = 0.
+
+
+
+####################
+# Helper Functions
+####################
+
+# for printing numbers in sci notation nicely
+def sci_notation(number, sig_fig=1):
+    ret_string_re = "{0:.{1:d}e}".format(np.real(number), sig_fig)
+    ret_string_im = "{0:.{1:d}e}".format(np.imag(number), sig_fig)
+    a_re, b_re = ret_string_re.split("e")
+    a_im, b_im = ret_string_im.split("e")  
+    # remove leading "+" and strip leading zeros
+    b_re = int(b_re)
+    b_im = int(b_im)
+    print(a_re,b_re,a_im,b_im)
+    if b_re!=0:
+        a_im = "{0:.{1:d}f}".format(float(a_im)*10**(float(b_im)/b_re), sig_fig)
+        b = b_re
+    elif b_im!=0:
+        a_re = "{0:.{1:d}f}".format(float(a_re)*10**(float(b_re)/b_im), sig_fig)
+        b = b_im
+    if float(a_re)==0: a_re="0"
+    if float(a_im)==0: a_im="0"
+    return r"(%s + %si)"%(a_re,a_im) + r" \times 10^{%s}"%str(b)
 
 # function to get the average electron density along the neutrino line of sight
 # baseline is the distance of the beam, and dL is the step size with which to compute the average density
@@ -39,6 +102,100 @@ def get_average_electron_density(baseline, dL, rhoshift, rhoscale):
     density += rhoshift
     density *= rhoscale
     return np.average(density) * nucleon_mass_density_to_electron_number_density
+
+
+#####################
+# Plotting functions
+#####################
+
+def energy_plot_1D(Enu,Emuon,
+                   experiment_list,
+                   rates_per_energy_SM,
+                   rates_per_energy_LV,
+                   nulabel,
+                   aeu=0, aet = 0, aut = 0, # d = 3
+                   ceu=0, cet=0, cut=0, # d = 4
+                  ):
+    fig,ax = plt.subplots(2,1,sharex=True)
+    ax[0].plot([], [],color="black",label="SM Only")
+    ax[0].plot([], [],color="black",ls="--",label="SM + LV")
+    for experiment,color in zip(experiment_list,["tab:green","tab:blue","tab:orange"]):
+        ax[0].plot(Enu/1e3,1e3*rates_per_energy_SM[experiment],color=color,label=experiment)
+        ax[0].plot(Enu/1e3,1e3*rates_per_energy_LV[experiment],color=color,ls="--")
+        ax[1].plot(Enu/1e3,rates_per_energy_LV[experiment]/rates_per_energy_SM[experiment],color=color)
+        
+    ax[0].ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
+    
+    ax[1].set_xlabel("Neutrino Energy [TeV]")
+    ax[0].set_ylabel("$%s$ Interactions / TeV / $5 \\times 10^{15}\\, \\mu$ Decays"%nulabel)
+    ax[1].set_ylim(0.5,1.5)
+    ax[0].set_xlim(Enu[0]/1e3,Enu[-1]/1e3)
+    ax[1].set_xlim(Enu[0]/1e3,Enu[-1]/1e3)
+    
+    ax[0].text(0.01, 0.98, "%i TeV $\\mu^+$ Beam\nUnpolarized\n\n%i Mt Fid. Mass" % (Emuon/1e3, MASS/1e6), 
+             transform=ax[0].transAxes, verticalalignment="top", fontsize=13)
+    
+    
+    ax[0].legend(fontsize=12, columnspacing=1, frameon=False, ncol=3,
+              loc='upper center', bbox_to_anchor=(0.45, 1.175))
+    
+    text_heights = np.linspace(1e7,1e8,3)
+    text_x_a,text_x_c = 0.510,3
+    if np.abs(aeu)>0: ax[0].text(text_x_a,text_heights[2],r"$a^{\rm T}_{e \mu} = %s~{\rm GeV}^{-1}$"%(sci_notation(aeu/1e9) if np.abs(aeu)>0 else "0"))
+    if np.abs(aet)>0: ax[0].text(text_x_a,text_heights[1],r"$a^{\rm T}_{e \tau} = %s~{\rm GeV}^{-1}$"%(sci_notation(aet/1e9) if np.abs(aet)>0 else "0"))
+    if np.abs(aut)>0: ax[0].text(text_x_a,text_heights[0],r"$a^{\rm T}_{\mu \tau} = %s~{\rm GeV}^{-1}$"%(sci_notation(aut/1e9) if np.abs(aut)>0 else "0"))
+    if np.abs(ceu)>0: ax[0].text(text_x_c,text_heights[2],r"$c^{\rm TT}_{e \mu} = %s$"%(sci_notation(ceu) if np.abs(ceu)>0 else "0"))
+    if np.abs(cet)>0: ax[0].text(text_x_c,text_heights[1],r"$c^{\rm TT}_{e \tau} = %s$"%(sci_notation(cet) if np.abs(cet)>0 else "0"))
+    if np.abs(cut)>0: ax[0].text(text_x_c,text_heights[0],r"$c^{\rm TT}_{\mu \tau} = %s$"%(sci_notation(cut) if np.abs(cut)>0 else "0"))
+    plt.show()
+
+
+def radial_plot_1D(Rs,Emuon,
+                   experiment_list,
+                   rates_per_radius_SM,
+                   rates_per_radius_LV,
+                   nutype, nulabel,
+                   aeu=0, aet = 0, aut = 0, # d = 3
+                   ceu=0, cet=0, cut=0, # d = 4
+                  ):
+    fig,ax = plt.subplots(2,1,sharex=True)
+    ax[0].plot([], [],color="black",label="SM Only")
+    ax[0].plot([], [],color="black",ls="--",label="SM + LV")
+    for experiment,color in zip(experiment_list,["tab:green","tab:blue","tab:orange"]):
+        ax[0].plot(Rs,rates_per_radius_SM[(nutype,experiment)],color=color,label=experiment)
+        ax[0].plot(Rs,rates_per_radius_LV[(nutype,experiment)],color=color,ls="--")
+        ax[1].plot(Rs,rates_per_radius_LV[(nutype,experiment)]/rates_per_radius_SM[(nutype,experiment)],color=color)
+        
+    ax[0].ticklabel_format(axis='y', style='sci', scilimits=(0, 0))
+    
+    ax[1].set_xlabel("Neutrino Interaction Radius [m]")
+    ax[0].set_ylabel("$%s$ Interactions / m / $5 \\times 10^{15}\\, \\mu$ Decays"%nulabel)
+    ax[1].set_ylim(0.5,1.5)
+    ax[0].set_xlim(Rs[0],Rs[-1])
+    ax[1].set_xlim(Rs[0],Rs[-1])
+    
+    ax[0].text(0.68, 0.98, "%i TeV $\\mu^+$ Beam\nUnpolarized\n\n%i Mt Fid. Mass" % (Emuon/1e3, MASS/1e6), 
+             transform=ax[0].transAxes, verticalalignment="top", fontsize=13)
+    
+    
+    ax[0].legend(fontsize=12, columnspacing=1, frameon=False, ncol=3,
+              loc='upper center', bbox_to_anchor=(0.45, 1.175))
+    
+    text_heights = np.linspace(2e7,3e7,3)
+    text_x_a,text_x_c = 200,300
+    if np.abs(aeu)>0: ax[0].text(text_x_a,text_heights[2],r"$a^{\rm T}_{e \mu} = %s~{\rm GeV}^{-1}$"%(sci_notation(aeu/1e9) if np.abs(aeu)>0 else "0"))
+    if np.abs(aet)>0: ax[0].text(text_x_a,text_heights[1],r"$a^{\rm T}_{e \tau} = %s~{\rm GeV}^{-1}$"%(sci_notation(aet/1e9) if np.abs(aet)>0 else "0"))
+    if np.abs(aut)>0: ax[0].text(text_x_a,text_heights[0],r"$a^{\rm T}_{\mu \tau} = %s~{\rm GeV}^{-1}$"%(sci_notation(aut/1e9) if np.abs(aut)>0 else "0"))
+    if np.abs(ceu)>0: ax[0].text(text_x_c,text_heights[2],r"$c^{\rm TT}_{e \mu} = %s$"%(sci_notation(ceu) if np.abs(ceu)>0 else "0"))
+    if np.abs(cet)>0: ax[0].text(text_x_c,text_heights[1],r"$c^{\rm TT}_{e \tau} = %s$"%(sci_notation(cet) if np.abs(cet)>0 else "0"))
+    if np.abs(cut)>0: ax[0].text(text_x_c,text_heights[0],r"$c^{\rm TT}_{\mu \tau} = %s$"%(sci_notation(cut) if np.abs(cut)>0 else "0"))
+    plt.show()
+                   
+
+
+####################
+# Main Class
+####################
 
 # This class is designed to handle the oscillation probability given SM extension coefficients
 # follows appendix A of 1410.4267
@@ -62,7 +219,7 @@ class LV_oscillations:
             energies = np.array([energies]).astype(float)
         self.energies = energies
         if dL is None:
-            dL = baseline/100
+            dL = baseline/1000
 
         c12 = np.cos(th12)
         c23 = np.cos(th23)
@@ -162,7 +319,8 @@ class LV_oscillations:
     # returns oscillation probability for alpha -> beta at each energy
     def get_oscillation_probability(self,
                                     alpha : str,
-                                    beta : str) -> list:
+                                    beta : str,
+                                    R = 0) -> list:
         if alpha not in ['e', 'mu', 'tau'] or beta not in ['e', 'mu', 'tau']:
             raise ValueError("Invalid initial flavor. Must be 'e', 'mu', or 'tau'")
 
@@ -176,6 +334,8 @@ class LV_oscillations:
         elif beta == "mu": Ubeta = self.Umu
         elif beta == "tau": Ubeta = self.Utau
 
+        baseline = np.sqrt(R**2 + self.baseline**2)
+
         # compute the oscillation probability for each energy
         Plist = []
         for energy_idx,energy in enumerate(self.energies):
@@ -187,9 +347,13 @@ class LV_oscillations:
                     if i <= j: continue
                     deltaE = self.E[j][energy_idx] - self.E[i][energy_idx]
                     mixing_element = Ubeta[j][energy_idx] * np.conj(Ubeta[i][energy_idx]) * np.conj(Ualpha[j][energy_idx]) * Ualpha[i][energy_idx]
-                    Re_term += mixing_element.real * (np.sin(self.baseline*deltaE / (2*hbarc*1e-2)))**2
-                    Im_term += mixing_element.imag * (np.sin(self.baseline*deltaE / (hbarc*1e-2)))**2
+                    Re_term += mixing_element.real * (np.sin(baseline*deltaE / (2*hbarc*1e-2)))**2
+                    Im_term += mixing_element.imag * (np.sin(baseline*deltaE / (hbarc*1e-2)))**2
             P -= 4*Re_term
             P += 2*Im_term
             Plist.append(P)
         return np.array(Plist)
+
+
+
+                   
