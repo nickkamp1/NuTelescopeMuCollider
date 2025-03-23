@@ -1,65 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.interpolate import RegularGridInterpolator
+
+from flux import *
+from xsec import *
+from binned_analysis import *
+from global_variables import *
 
 
-####################
-# Global Variables
-####################
-
-# Neutrino oscillation parameters
-th12 = 33.44 *np.pi/180
-th23 = 49.20 *np.pi/180
-th13 =  8.57 *np.pi/180
-
-dm21 = 7.42e-5 # eV^2
-dm31 = 2.517e-3 # eV^2
-
-GeV = 1#1e9
-
-# matter effect constants
-Ye = 0.5 # e - / nucleon
-R_earth = 6371.0 # km
-GFermi = 1.166e-23 # eV^-2
-NA = 6.02e23
-hbarc = 197.3e-7 # eV cm
-nucleon_mass_density_to_electron_number_density = Ye * NA * hbarc**3 # nucleons / cm^3 -> e- eV^3
-
-# PREM model
-DPdepth = np.genfromtxt("DensityProfileDepthAK135.txt")
-DPdensity = np.genfromtxt("DensityProfileDensityAK135.txt")
-
-
-# Possible Baselines
-
-# ICECUBE
-
-# Radius of earth
-R_earth = 6371.0 # km
-
-# Chicago latitude
-lat = 41.88
-
-# Baseline, approx sphere
-alpha = ((90 - lat)/2)*np.pi/180
-ICECUBE_BASELINE = np.sqrt(2*R_earth**2*(1 - np.cos((90+lat)*np.pi/180)))*1e3 # meters
-# Others
-PONE_BASELINE = 1758*1.60934*1e3
-KM3NeT_BASELINE = 4427*1.60934*1e3
-
-# 500 mega-tonne mass, baseline
-MASS = 500e6
-
-# density of water
-DENSITY = 1 # t / m^3
-
-VOLUME = MASS / DENSITY
-RADIUS = np.power(VOLUME/((4./3.)*np.pi), 1./3.)
-Emuon = 5e3
-
-# Unpolarized
-P = 0
-
-deltaCP0 = 0.
 
 
 
@@ -103,6 +51,97 @@ def get_average_electron_density(baseline, dL, rhoshift, rhoscale):
     density *= rhoscale
     return np.average(density) * nucleon_mass_density_to_electron_number_density
 
+#####################
+# Rate functions
+#####################
+
+# Rate of neutrino interactions / dR / dE
+# Units: (Number of Interactions) / m / GeV
+def rate(flux, xsec, Enu, R, P, baseline):
+    costh = np.cos(R/baseline)
+    ret = flux(Emuon, P, Enu, costh, baseline)*xsec(Enu)*MASS*(4*np.pi*R*np.sqrt(RADIUS**2 - R**2)/VOLUME)
+    if not isinstance(ret, float):
+        ret[R > RADIUS] = 0
+    elif R > RADIUS:
+        return 0
+    return ret
+
+def numu_rate(Enu, R, P, B):
+    return rate(numu_flux_baseline, xsec, Enu, R, P, B)
+
+def nue_rate(Enu, R, P, B):
+    return rate(nue_flux_baseline, xsec, Enu, R, P, B)
+
+def numubar_rate(Enu, R, P, B):
+    return rate(numu_flux_baseline, xsecbar, Enu, R, P, B)
+
+def nuebar_rate(Enu, R, P, B):
+    return rate(nue_flux_baseline, xsecbar, Enu, R, P, B)
+
+# function to get the interpolation functions of numubar and nue rate for a given experiment
+# per energy and radius, within the bounds of Enus and Rs
+def get_interp_rates_per_energy_radius(experiment,
+                                       Enus = np.linspace(Emuon/100, Emuon, 100),
+                                       Rs = np.linspace(0,RADIUS,100),
+                                       aeu = 0, aet = 0, aut = 0,
+                                       ceu = 0, cet = 0, cut = 0):
+
+    baseline = baseline_list[experiment]
+    LV_case_nu = LV_oscillations(Enus*1e9, baseline, 1,
+                                 aeu = aeu, aet = aet, aut = aut,
+                                 ceu = ceu, cet = cet, cut = cut)
+    LV_case_nubar = LV_oscillations(Enus*1e9, baseline, -1,
+                                    aeu = aeu, aet = aet, aut = aut,
+                                    ceu = ceu, cet = cet, cut = cut)
+    
+    numubar_rates_per_energy_radius = np.zeros((len(Enus),len(Rs)))
+    nue_rates_per_energy_radius = np.zeros((len(Enus),len(Rs)))
+
+    for ir,R in enumerate(Rs):
+        # numubars
+        mu_to_mu = LV_case_nubar.get_oscillation_probability("mu", "mu",R=R)
+        e_to_mu = LV_case_nubar.get_oscillation_probability("e", "mu",R=R)
+        # nues
+        e_to_e = LV_case_nubar.get_oscillation_probability("e", "e",R=R)
+        mu_to_e = LV_case_nubar.get_oscillation_probability("mu", "e",R=R)
+        for ie,E in enumerate(Enus):
+            numubar_rates_per_energy_radius[ie,ir] = mu_to_mu[ie] * numubar_rate(E, R, P, baseline) + e_to_mu[ie] * nue_rate(E, R, P, baseline)
+            nue_rates_per_energy_radius[ie,ir] = e_to_e[ie] * nue_rate(E, R, P, baseline) + mu_to_e[ie] * numubar_rate(E, R, P, baseline)
+    # interpolation functions
+    numubar_interp_rates_per_energy_radius = RegularGridInterpolator((Enus,Rs),numubar_rates_per_energy_radius)
+    nue_interp_rates_per_energy_radius = RegularGridInterpolator((Enus,Rs),nue_rates_per_energy_radius)
+    return numubar_interp_rates_per_energy_radius,nue_interp_rates_per_energy_radius
+    
+        
+def get_delta_chisquare_for_LV_case(Rbins,Ebins,
+                                    aeu = 0, aet = 0, aut = 0,
+                                    ceu = 0, cet = 0, cut = 0,
+                                    sigmaCorr=0.015,sigmaUncorr=0):
+
+    nue_interp_rates_per_energy_radius_SM = {}
+    nue_interp_rates_per_energy_radius_LV = {}
+    numubar_interp_rates_per_energy_radius_SM = {}
+    numubar_interp_rates_per_energy_radius_LV = {}
+    for exp in experiment_list:
+        (numubar_interp_rates_per_energy_radius_SM[exp],
+         nue_interp_rates_per_energy_radius_SM[exp]) = get_interp_rates_per_energy_radius(exp,aeu = 0, aet = 0, aut = 0,
+                                                                                        ceu = 0, cet = 0, cut = 0)
+        (numubar_interp_rates_per_energy_radius_LV[exp],
+         nue_interp_rates_per_energy_radius_LV[exp]) = get_interp_rates_per_energy_radius(exp,aeu = aeu, aet = aet, aut = aut,
+                                                                                        ceu = ceu, cet = cet, cut = cut)
+    numubar_rates_per_bin,nue_rates_per_bin = trapezoid_integrate(Rbins,Ebins,
+                                                               nue_interp_rates_per_energy_radius_SM,
+                                                               nue_interp_rates_per_energy_radius_LV,
+                                                               numubar_interp_rates_per_energy_radius_SM,
+                                                               numubar_interp_rates_per_energy_radius_LV)
+    return {exp:delta_chi_square(nue_rates_per_bin[(exp,"alt")],
+                                 nue_rates_per_bin[(exp,"SM")],
+                                 numubar_rates_per_bin[(exp,"alt")],
+                                 numubar_rates_per_bin[(exp,"SM")],
+                                 sigmaCorr=sigmaCorr,
+                                 sigmaUncorr=sigmaUncorr) for exp in experiment_list}
+    
+
 
 #####################
 # Plotting functions
@@ -137,7 +176,7 @@ def energy_plot_1D(Enu,Emuon,
     
     
     ax[0].legend(fontsize=12, columnspacing=1, frameon=False, ncol=3,
-              loc='upper center', bbox_to_anchor=(0.45, 1.175))
+              loc='best', bbox_to_anchor=(0.45, 1.175))
     
     text_heights = np.linspace(1e7,1e8,3)
     text_x_a,text_x_c = 0.510,3
@@ -179,7 +218,7 @@ def radial_plot_1D(Rs,Emuon,
     
     
     ax[0].legend(fontsize=12, columnspacing=1, frameon=False, ncol=3,
-              loc='upper center', bbox_to_anchor=(0.45, 1.175))
+              loc='best', bbox_to_anchor=(0.45, 1.175))
     
     text_heights = np.linspace(2e7,3e7,3)
     text_x_a,text_x_c = 200,300
@@ -190,6 +229,10 @@ def radial_plot_1D(Rs,Emuon,
     if np.abs(cet)>0: ax[0].text(text_x_c,text_heights[1],r"$c^{\rm TT}_{e \tau} = %s$"%(sci_notation(cet) if np.abs(cet)>0 else "0"))
     if np.abs(cut)>0: ax[0].text(text_x_c,text_heights[0],r"$c^{\rm TT}_{\mu \tau} = %s$"%(sci_notation(cut) if np.abs(cut)>0 else "0"))
     plt.show()
+
+
+    
+                                       
                    
 
 
