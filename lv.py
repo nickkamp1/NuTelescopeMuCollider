@@ -134,6 +134,7 @@ def get_delta_chisquare_for_LV_case(Rbins,Ebins,
                                                                nue_interp_rates_per_energy_radius_LV,
                                                                numubar_interp_rates_per_energy_radius_SM,
                                                                numubar_interp_rates_per_energy_radius_LV)
+    print("numubar total rate",sum(numubar_rates_per_bin[(exp,"SM")]))
     return {exp:delta_chi_square(nue_rates_per_bin[(exp,"alt")],
                                  nue_rates_per_bin[(exp,"SM")],
                                  numubar_rates_per_bin[(exp,"alt")],
@@ -237,7 +238,12 @@ def radial_plot_1D(Rs,Emuon,
 
 
 ####################
-# Main Class
+# Main Classses
+####################
+
+
+####################
+# Isotropic Oscillations
 ####################
 
 # This class is designed to handle the oscillation probability given SM extension coefficients
@@ -396,6 +402,98 @@ class LV_oscillations:
             P += 2*Im_term
             Plist.append(P)
         return np.array(Plist)
+
+####################
+# Sidereal Variations
+####################
+def lat_long_to_cartesian(lat,long):
+    x = R_earth*np.cos(lat)*np.cos(long)
+    y = R_earth*np.cos(lat)*np.sin(long)
+    z = R_earth*np.sin(lat)
+    return np.array([x,y,z]).T
+    
+def directional_vector(experiment):
+    lat = latitude_list[experiment]
+    long = longitude_list[experiment]
+    start = lat_long_to_cartesian(fermi_lat,fermi_long)
+    end = lat_long_to_cartesian(lat,long)
+    direction = end - start
+    theta = np.arccos(np.dot(start,direction)/(np.linalg.norm(start)*np.linalg.norm(direction)))
+    e = np.array([-np.sin(fermi_long),np.cos(fermi_long),0]) # east vector at beam
+    n = np.array([-np.cos(fermi_lat)*np.cos(fermi_long), -np.cos(lat)*np.sin(fermi_long), np.sin(fermi_lat)]) # north vector at beam
+    vxy = direction - (np.dot(start,direction)/np.dot(start,start))*start
+    cosphi = np.dot(vxy,-n)/np.linalg.norm(vxy)
+    sinphi = np.dot(vxy,e)/np.linalg.norm(vxy)
+    chi = np.pi/180 * (90 - lat) # colatitude
+    Nx = np.cos(chi)*np.sin(theta)*cosphi + np.sin(chi)*np.cos(theta)
+    Ny = np.sin(theta)*sinphi
+    Nz = -np.sin(chi)*np.sin(theta)*cosphi + np.cos(chi)*np.cos(theta)
+    return np.array([Nx,Ny,Nz])
+
+def osc_prob(L,RA,
+             C=0,
+             Ac=0,As=0,
+             Bc=0,Bs=0):
+    L_term = (L/(hbarc*1e-2*1e-9))**2 # GeV^-2
+    lv_term = (C 
+               + Ac*np.cos(2*np.pi*RA)
+               + As*np.sin(2*np.pi*RA)
+               + Bc*np.cos(2*2*np.pi*RA)
+               + Bs*np.sin(2*2*np.pi*RA)
+              )**2
+    if (np.any(L_term*lv_term>1)):
+        print("Warning! We are not in the short baseline regime. perturbation term reaches %1.1f"%np.max(L_term*lv_term))
+    return 1 - L_term * lv_term
+
+# This class is designed to handle sidereal variations given SM extension coefficients
+# follows https://arxiv.org/abs/hep-ph/0406255
+# we drop the flavor indices; all oscillation probabilities are from generic flavor a to b
+
+class LV_sidreal_variations:
+
+    # aL = 4-vector
+    # cL = 4x4 tensor
+    def __init__(self,
+                 aL,
+                 cL):
+        self.aL = aL
+        self.cL = cL
+
+    # returns C, As, Ac, Bs, Bc
+    # follows eq 4-12 of https://arxiv.org/abs/hep-ph/0406255
+    def get_coefficients(self,
+                         exp,
+                         Emean=3e3, # GeV
+                         nusign=1):
+        
+        if nusign>0:
+            aL = self.aL
+            cL = self.cL
+        else:
+            aL = np.conj(self.aL)
+            cL = np.conj(self.cL)
+
+        N = directional_vector(exp)
+        
+        C0 = aL[0] - N[2]*aL[3]
+        C1 = -1./2 * (3 - N[2]*N[2])*cL[0,0] + 2*N[2]*cL[0,2] + 1./2.*(1 - 3*N[2]*N[2])*cL[2,2]
+        As0 = N[1]*aL[1] - N[0]*aL[2]
+        As1 = -2*N[1]*cL[0,1] + 2*N[0]*cL[0,2] + 2*N[1]*N[2]*cL[1,3] - 2*N[0]*N[2]*cL[2,3]
+        Ac0 = -N[0]*aL[1] - N[1]*aL[2]
+        Ac1 = 2*N[0]*cL[0,1] + 2*N[1]*cL[0,2] - 2*N[0]*N[2]*cL[1,3] - 2*N[1]*N[2]*cL[2,3]
+        Bs1 = N[1]*N[2] * (cL[1,1] - cL[2,2]) - (N[0]*N[0] - N[1]*N[1])*cL[1,2]
+        Bc1 = -1./2.*(N[0]*N[0] - N[1]*N[1])*(cL[1,1] - cL[2,2]) - 2*N[0]*N[1]*cL[1,2]
+
+        C = C0 + Emean*C1
+        As = As0 + Emean*As1
+        Ac = Ac0 + Emean*Ac1
+        Bs = Emean*Bs1
+        Bc = Emean*Bc1
+        return C,As,Ac,Bs,Bc
+
+    
+        
+        
 
 
 

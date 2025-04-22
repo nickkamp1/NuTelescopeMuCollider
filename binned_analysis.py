@@ -11,9 +11,10 @@ def NumuEnergySmearing(Ereco,Etrue,kE=0.5):
 def PositionSmearing(Rreco,Rtrue,sig_r=10):
     return norm.pdf(Rreco,loc=Rtrue,scale=sig_r)
 
-def nue_integrand(x,
-                  nue_interp_rates_per_energy_radius_SM,
-                  nue_interp_rates_per_energy_radius_alt):
+# this function must consider the nue CC rates as well as the numu and nue NC rates
+def cascade_integrand(x,
+                      nue_interp_rates_per_energy_radius_SM,
+                      nue_interp_rates_per_energy_radius_alt):
     Er,Rr,Et = x
     Rt = Rr
     #Et = Er
@@ -23,7 +24,8 @@ def nue_integrand(x,
         ret[(experiment,"alt")] = nue_interp_rates_per_energy_radius_alt[experiment]((Et,Rt))*NueEnergySmearing(Er,Et)#*PositionSmearing(Rr,Rt)
     return ret
 
-def numubar_integrand(x,
+# this function need only consider numu CC rates
+def track_integrand(x,
                       numubar_interp_rates_per_energy_radius_SM,
                       numubar_interp_rates_per_energy_radius_alt):
     Et,Rr = x
@@ -46,7 +48,7 @@ def trapezoid_integrate(Rbins,Ebins,
         r_subrange = np.linspace(Rbins[iR],Rbins[iR+1],oversampling)
         e_subrange = np.linspace(Ebins[0],Ebins[-1],len(Ebins)*oversampling) # integerate numu over full e range
         X,Y = np.meshgrid(e_subrange,r_subrange)
-        numubar_diff_rates = numubar_integrand((X,Y),
+        numubar_diff_rates = track_integrand((X,Y),
                                                numubar_interp_rates_per_energy_radius_SM,
                                                numubar_interp_rates_per_energy_radius_alt)
         for exp in experiment_list:
@@ -57,7 +59,7 @@ def trapezoid_integrate(Rbins,Ebins,
             e_subrange = np.linspace(Ebins[iE],Ebins[iE+1],oversampling) # integerate nue over only e bin
             etrue_subrange = np.linspace(Ebins[0],Ebins[-1],len(Ebins)*oversampling) # integrate over etrue as well for energy smearing
             X,Y,Z = np.meshgrid(e_subrange,r_subrange,etrue_subrange)
-            nue_diff_rates = nue_integrand((X,Y,Z),
+            nue_diff_rates = cascade_integrand((X,Y,Z),
                                            nue_interp_rates_per_energy_radius_SM,
                                            nue_interp_rates_per_energy_radius_alt)
             for exp in experiment_list:
