@@ -56,6 +56,9 @@ KM3NeT_BASELINE = 4427*1.60934*1e3
 
 
 experiment_list = ["KM3","IC","PONE"]
+experiment_names = {"PONE":"POne",
+                    "KM3":"KM3NeT",
+                    "IC":"IceCube",}
 baseline_list = {"PONE":PONE_BASELINE,
                  "KM3":KM3NeT_BASELINE,
                  "IC":ICECUBE_BASELINE}
@@ -70,7 +73,7 @@ color_list = {"PONE":"crimson",
               "IC":"deepskyblue",}
 
 # 500 mega-tonne mass, baseline
-MASS = 500e6
+MASS = 1e9#500e6
 
 # density of water
 DENSITY = 1 # t / m^3

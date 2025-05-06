@@ -406,6 +406,7 @@ class LV_oscillations:
 ####################
 # Sidereal Variations
 ####################
+
 def lat_long_to_cartesian(lat,long):
     x = R_earth*np.cos(lat)*np.cos(long)
     y = R_earth*np.cos(lat)*np.sin(long)

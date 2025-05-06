@@ -56,16 +56,17 @@ def nue_flux_baseline(Emuon, Pmuon, enu, costhlab, baseline):
 
 def nu_flux_accelerator(fluxf, Emuon, Pmuon, enu, costhlab, baseline):
     G = Emuon / MU_MASS
-    Nmuon = MU_PER_BUNCH*(C_M_PER_US/CIRCUMFERENCE)*S2YR*(Lmuon/C_M_PER_US)/(MU_TAU*G)*STRAIGHT_SECTION_ACCELERATOR 
+    Nmuon = MU_PER_BUNCH*(1e6*C_M_PER_US/CIRCUMFERENCE)*S2YR*(STRAIGHT_SECTION_ACCELERATOR/C_M_PER_US)/(MU_TAU*G)
+    #print("Nmuon",Nmuon/1e15)
     return fluxf(Emuon, Nmuon, Pmuon, enu, costhlab, baseline)
 
 def nu_flux_dump(fluxf, Emuon, Pmuon, enu, costhlab, baseline):
     G = Emuon / MU_MASS
-    Nmuon = MU_PER_BUNCH*REPRATE*S2YR*(Lmuon/C_M_PER_US)/(MU_TAU*G)*STRAIGHT_SECTION_DUMP
+    Nmuon = MU_PER_BUNCH*REPRATE*S2YR*(STRAIGHT_SECTION_DUMP/C_M_PER_US)/(MU_TAU*G)
     return fluxf(Emuon, Nmuon, Pmuon, enu, costhlab, baseline)
 
 def nu_flux_baseline(fluxf, Emuon, Pmuon, enu, costhlab, baseline):
-    Nmuon_baseline = 5e15
+    Nmuon_baseline = 5e14
     return fluxf(Emuon, Nmuon_baseline, Pmuon, enu, costhlab, baseline)
 
 def costhcm_v(Emuon, costhlab):
