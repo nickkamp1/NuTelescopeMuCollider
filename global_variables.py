@@ -56,7 +56,7 @@ KM3NeT_BASELINE = 4427*1.60934*1e3
 
 
 experiment_list = ["KM3","IC","PONE"]
-experiment_names = {"PONE":"POne",
+experiment_names = {"PONE":"P-ONE",
                     "KM3":"KM3NeT",
                     "IC":"IceCube",}
 baseline_list = {"PONE":PONE_BASELINE,

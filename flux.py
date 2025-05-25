@@ -32,12 +32,14 @@ CIRCUMFERENCE = 10e3 # m
 # For the accelerator case, straight sections are quoted as 30 cm
 # in the above paper. The accelerator can't always point at the
 # same location due to radiation concerns. Let's say we get it pointed
-# at the telescope 1% of the time.
-STRAIGHT_SECTION_ACCELERATOR = 0.3*0.01 # m
+# at the telescope 2% of the time.
+# STRAIGHT_SECTION_ACCELERATOR = 0.3*0.02 # m
+# According to Cari: 100 m straight segments are possible around the interaction point
+STRAIGHT_SECTION_ACCELERATOR = 100*0.02 # m
 
 # For the dump, we probably get a bigger length to work with. Let's
 # say it's 10 m long
-STRAIGHT_SECTION_DUMP = 10 # m
+STRAIGHT_SECTION_DUMP = 25 # m
 
 def numu_flux_accelerator(Emuon, Pmuon, enu, costhlab, baseline):
     return nu_flux_accelerator(numu_flux, Emuon, Pmuon, enu, costhlab, baseline)
@@ -57,12 +59,13 @@ def nue_flux_baseline(Emuon, Pmuon, enu, costhlab, baseline):
 def nu_flux_accelerator(fluxf, Emuon, Pmuon, enu, costhlab, baseline):
     G = Emuon / MU_MASS
     Nmuon = MU_PER_BUNCH*(1e6*C_M_PER_US/CIRCUMFERENCE)*S2YR*(STRAIGHT_SECTION_ACCELERATOR/C_M_PER_US)/(MU_TAU*G)
-    #print("Nmuon",Nmuon/1e15)
+    #print("Nmuon_accelerator / 5e14",Nmuon/5e14)
     return fluxf(Emuon, Nmuon, Pmuon, enu, costhlab, baseline)
 
 def nu_flux_dump(fluxf, Emuon, Pmuon, enu, costhlab, baseline):
     G = Emuon / MU_MASS
     Nmuon = MU_PER_BUNCH*REPRATE*S2YR*(STRAIGHT_SECTION_DUMP/C_M_PER_US)/(MU_TAU*G)
+    #print("Nmuon_dump / 5e14",Nmuon/5e14)
     return fluxf(Emuon, Nmuon, Pmuon, enu, costhlab, baseline)
 
 def nu_flux_baseline(fluxf, Emuon, Pmuon, enu, costhlab, baseline):

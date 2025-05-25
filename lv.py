@@ -464,7 +464,7 @@ class LV_sidreal_variations:
     # follows eq 4-12 of https://arxiv.org/abs/hep-ph/0406255
     def get_coefficients(self,
                          exp,
-                         Emean=3e3, # GeV
+                         Emean=Emuon/2, # GeV
                          nusign=1):
         
         if nusign>0:
