@@ -179,8 +179,13 @@ static PyObject *do_osc(PyObject *self, PyObject *args) {
 
   // Time Evolution Loop!
   for (int i = 0; i < density_size; i++) { // Time / Length evolution
-     double Ye = 0.5; // Electron fraction
-    double rho = *((double*)PyArray_GETPTR1(density, i));
+    double NA = 6e23; // Avogadro number, mol/g
+    double Ye = 0.5; // Electron fraction, neutron fraction, proton fraction
+    double rho = *((double*)PyArray_GETPTR1(density, i)); // density, g/cm3
+    double hbarc_GeV_cm = 197.3e-16; // GeV*cm 
+    double Gfermi = 1.166e-5; // GeV^-2
+    double MP_v = Ye*rho*Gfermi*NA*(hbarc_GeV_cm*hbarc_GeV_cm*hbarc_GeV_cm)*sqrt(2)*1e9*1e9; // eV^2 * (E / GeV)
+
     double hbarc = 6.582119e-16*3e8; // ev*m
 
     for (int j = 0; j < energy_size; j++) { // Per neutrino energy
@@ -190,8 +195,7 @@ static PyObject *do_osc(PyObject *self, PyObject *args) {
       std::complex<double> A[NNU][NNU]; // Build matter potential
       for (unsigned i_A = 0; i_A < NNU; i_A++) {
         for (unsigned j_A = 0; j_A < NNU; j_A++) {
-          // TODO: check factor of 2
-	  A[i_A][j_A] = 2*1.52e-4*Ye*rho*E*(*((std::complex<double>*)PyArray_GETPTR2(MP, i_A, j_A)));
+	  A[i_A][j_A] = 2*E*MP_v*(*((std::complex<double>*)PyArray_GETPTR2(MP, i_A, j_A)));
         }
       }
 

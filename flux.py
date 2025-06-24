@@ -15,7 +15,7 @@ C_M_PER_US = 299.792 # m / us
 #    rate is equal to the repition rate (assuming the rate
 #    of muons in is equal to the rate of muons out).
 # 
-# 3) A baseline of 5e15 muon decays. This reproduces both
+# 3) A baseline of 1e15 muon decays. This reproduces both
 #    configurations within the order of magnitude
 
 # Parameters taken from: https://arxiv.org/abs/2407.12450
@@ -56,16 +56,16 @@ def nue_flux_baseline(Emuon, Pmuon, enu, costhlab, baseline):
 
 def nu_flux_accelerator(fluxf, Emuon, Pmuon, enu, costhlab, baseline):
     G = Emuon / MU_MASS
-    Nmuon = MU_PER_BUNCH*(C_M_PER_US/CIRCUMFERENCE)*S2YR*(Lmuon/C_M_PER_US)/(MU_TAU*G)*STRAIGHT_SECTION_ACCELERATOR 
+    Nmuon = MU_PER_BUNCH*(C_M_PER_US/CIRCUMFERENCE)*S2YR*(1./C_M_PER_US)/(MU_TAU*G)*STRAIGHT_SECTION_ACCELERATOR 
     return fluxf(Emuon, Nmuon, Pmuon, enu, costhlab, baseline)
 
 def nu_flux_dump(fluxf, Emuon, Pmuon, enu, costhlab, baseline):
     G = Emuon / MU_MASS
-    Nmuon = MU_PER_BUNCH*REPRATE*S2YR*(Lmuon/C_M_PER_US)/(MU_TAU*G)*STRAIGHT_SECTION_DUMP
+    Nmuon = MU_PER_BUNCH*REPRATE*S2YR*(1./C_M_PER_US)/(MU_TAU*G)*STRAIGHT_SECTION_DUMP
     return fluxf(Emuon, Nmuon, Pmuon, enu, costhlab, baseline)
 
 def nu_flux_baseline(fluxf, Emuon, Pmuon, enu, costhlab, baseline):
-    Nmuon_baseline = 5e15
+    Nmuon_baseline = 1e15
     return fluxf(Emuon, Nmuon_baseline, Pmuon, enu, costhlab, baseline)
 
 def costhcm_v(Emuon, costhlab):

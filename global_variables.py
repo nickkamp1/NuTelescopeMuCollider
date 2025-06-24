@@ -49,7 +49,8 @@ baseline_list = {"PONE":PONE_BASELINE,
                  "IC":ICECUBE_BASELINE}
 
 # 500 mega-tonne mass, baseline
-MASS = 500e6
+# 1Gt mass, baseline
+MASS = 1e9
 
 # density of water
 DENSITY = 1 # t / m^3

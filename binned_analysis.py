@@ -102,6 +102,7 @@ def delta_chi_square(nue_alt_rates_per_bin,
                      sigmaCorr=0.01,
                      sigmaUncorr=0,
                      threshold=1):
+    
     predSM = np.concatenate((nue_SM_rates_per_bin.flatten(),numu_SM_rates_per_bin))
     predalt = np.concatenate((nue_alt_rates_per_bin.flatten(),numu_alt_rates_per_bin))
     nonzero_mask = np.where(predSM>threshold)

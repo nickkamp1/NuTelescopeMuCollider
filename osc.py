@@ -26,7 +26,7 @@ deltaCP0 = 0.
 def oscillate(E, baseline, nuind, nusign, dL=1e2, # m 
               rhoset=None, rhoshift=0, rhoscale=1,
               # three-neutrino oscillations
-              th12=th12, th23=th23, th13=th13, dm21=dm21, dm31=dm31,
+              th12=th12, th23=th23, th13=th13, dm21=dm21, dm31=dm31, deltaCP=deltaCP0,
               # sterile neutrino
               th14=0, th24=0, th34=0, dm41=0,
               # anomalous matter potential
@@ -55,6 +55,13 @@ def oscillate(E, baseline, nuind, nusign, dL=1e2, # m
 	[-c23*c24*s12 -c12*c24*s13*s23 -c12*c13*s14*s24,	c12*c23*c24 -c24*s12*s13*s23 -c13*s12*s14*s24,	c13*c24*s23 -s13*s14*s24,	c14*s24],
 	[-c12*c23*c34*s13 +c34*s12*s23 -c12*c13*c24*s14*s34 +c23*s12*s24*s34 +c12*s13*s23*s24*s34,	-c23*c34*s12*s13 -c12*c34*s23 -c13*c24*s12*s14*s34 -c12*c23*s24*s34 +s12*s13*s23*s24*s34,	c13*c23*c34 -c24*s13*s14*s34 -c13*s23*s24*s34,	c14*c24*s34],
 	[-c12*c13*c24*c34*s14 +c23*c34*s12*s24 +c12*c34*s13*s23*s24 +c12*c23*s13*s34 -s12*s23*s34,	-c13*c24*c34*s12*s14 -c12*c23*c34*s24 +c34*s12*s13*s23*s24 +c23*s12*s13*s34 +c12*s23*s34,	-c24*c34*s13*s14 -c13*c34*s23*s24 -c13*c23*s34,	c14*c24*c34]
+    ]).astype(np.complex128)
+
+    U += np.array([
+        [0, 0, s13*np.exp(-1.0j*deltaCP), 0],
+        [-c12*s23*s13*np.exp(1.0j*deltaCP), -s12*s23*s13*np.exp(1.0j*deltaCP), 0, 0],
+        [-c12*c23*s13*np.exp(1.0j*deltaCP), -s12*c23*s13*np.exp(1.0j*deltaCP), 0, 0],
+        [0, 0, 0, 0]
     ])
 
     # Matter Potential
