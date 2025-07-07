@@ -34,8 +34,10 @@ CIRCUMFERENCE = 10e3 # m
 # same location due to radiation concerns. Let's say we get it pointed
 # at the telescope 2% of the time.
 # STRAIGHT_SECTION_ACCELERATOR = 0.3*0.02 # m
+
 # According to Cari: 100 m straight segments are possible around the interaction point
-STRAIGHT_SECTION_ACCELERATOR = 100*0.02 # m
+# It'd have a larger angular spread corresponding to a factor of 30 decrease in the rate:
+STRAIGHT_SECTION_ACCELERATOR = 100/30. # m
 
 # For the dump, we probably get a bigger length to work with. Let's
 # say it's 10 m long
@@ -59,7 +61,7 @@ def nue_flux_baseline(Emuon, Pmuon, enu, costhlab, baseline):
 def nu_flux_accelerator(fluxf, Emuon, Pmuon, enu, costhlab, baseline):
     G = Emuon / MU_MASS
     Nmuon = MU_PER_BUNCH*(1e6*C_M_PER_US/CIRCUMFERENCE)*S2YR*(STRAIGHT_SECTION_ACCELERATOR/C_M_PER_US)/(MU_TAU*G)
-    #print("Nmuon_accelerator / 5e14",Nmuon/5e14)
+    #print("Nmuon_accelerator %2.2e"%Nmuon)
     return fluxf(Emuon, Nmuon, Pmuon, enu, costhlab, baseline)
 
 def nu_flux_dump(fluxf, Emuon, Pmuon, enu, costhlab, baseline):

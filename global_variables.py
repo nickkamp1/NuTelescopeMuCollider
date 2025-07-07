@@ -68,9 +68,9 @@ latitude_list = {"PONE":PONE_lat,
 longitude_list = {"PONE":PONE_long,
                  "KM3":KM3NeT_long,
                  "IC":ICECUBE_long}
-color_list = {"PONE":"crimson",
-              "KM3":"fuchsia",
-              "IC":"deepskyblue",}
+color_list = {"PONE":"#eb1521",
+              "KM3":"#b8598d",
+              "IC":"#6fbbd6",}
 
 # 1Gt mass, baseline
 MASS = 1e9#500e6

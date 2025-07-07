@@ -395,17 +395,21 @@ def directional_vector(experiment):
 def osc_prob(L,RA,
              C=0,
              Ac=0,As=0,
-             Bc=0,Bs=0):
+             Bc=0,Bs=0,
+             Emean=Emuon/2):
     L_term = (L/(hbarc*1e-2*1e-9))**2 # GeV^-2
+    sm_term = (dm31*(1e-9)**2)/(4*Emean)*np.sin(2*th23)**2 # GeV
     lv_term = (C 
                + Ac*np.cos(2*np.pi*RA)
                + As*np.sin(2*np.pi*RA)
                + Bc*np.cos(2*2*np.pi*RA)
                + Bs*np.sin(2*2*np.pi*RA)
-              )**2
-    if (np.any(L_term*lv_term>1)):
-        print("Warning! We are not in the short baseline regime. perturbation term reaches %1.1f"%np.max(L_term*lv_term))
-    return 1 - L_term * lv_term
+              ) # GeV
+    #print(sm_term,lv_term)
+    osc_expr = L_term * (sm_term + lv_term)**2
+    if (np.any(osc_expr>1)):
+        print("Warning! We are not in the short baseline regime. perturbation term reaches %1.1f"%np.max(osc_expr))
+    return 1 - osc_expr
 
 # This class is designed to handle sidereal variations given SM extension coefficients
 # follows https://arxiv.org/abs/hep-ph/0406255
