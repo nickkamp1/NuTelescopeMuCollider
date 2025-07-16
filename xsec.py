@@ -86,13 +86,14 @@ def xsecbar_trident_dimuon(Enu):
 # W boson production from https://github.com/beizhouphys/neutrino-W-boson-and-trident-production/tree/master
 
 WBP_data = np.loadtxt("data/numu_H2O_TO_mu_W_X_tot.txt")
+W_muon_BR = 0.1063 # PDG
 WBP_CC = interp1d(np.log10(WBP_data[:,0]),np.log10(WBP_data[:,1]/18),fill_value="extrapolate") # 18 for nucleons/H20
 
 def xsec_WBP_dimuon(Enu):
-    return 10**WBP_CC(np.log10(Enu)) * cm2_per_nucleon__to__m2_per_ton
+    return 10**WBP_CC(np.log10(Enu)) * cm2_per_nucleon__to__m2_per_ton * W_muon_BR
 
 def xsecbar_WBP_dimuon(Enu):
-    return 10**WBP_CC(np.log10(Enu)) * cm2_per_nucleon__to__m2_per_ton
+    return 10**WBP_CC(np.log10(Enu)) * cm2_per_nucleon__to__m2_per_ton * W_muon_BR
 
 if __name__ == "__main__":
     print("Xsec check")
