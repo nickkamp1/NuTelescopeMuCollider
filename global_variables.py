@@ -18,6 +18,7 @@ GeV = 1#1e9
 Ye = 0.5 # e - / nucleon
 R_earth = 6371.0 # km
 GFermi = 1.166e-23 # eV^-2
+Eplanck = 1.22e19 # GeV
 NA = 6.02e23
 hbarc = 197.3e-7 # eV cm
 nucleon_mass_density_to_electron_number_density = Ye * NA * hbarc**3 # nucleons / cm^3 -> e- eV^3
