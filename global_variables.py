@@ -36,8 +36,8 @@ DPdensity = np.genfromtxt("DensityProfileDensityAK135.txt")
 R_earth = 6371.0 # km
 
 # Chicago latitude
-fermi_lat = 41.88
-fermi_long = 88.26
+fermi_lat = 41.82866633229909 # more accurate than previous 41.88
+fermi_long = -88.26395888571726 # more accurate and sign fliip than previous 88.26
 alpha = ((90 - fermi_lat)/2)*np.pi/180
 
 # IceCube Geometry
@@ -55,9 +55,13 @@ KM3NeT_lat = 36.27
 KM3NeT_long = 16.10
 KM3NeT_BASELINE = 4427*1.60934*1e3
 
+# MINOS ND Geometry as a check
+MINOS_lat = 41.8405556
+MINOS_long = -88.27055555555556
+
 
 experiment_list = ["KM3","IC","PONE"]
-experiment_names = {"PONE":"P-ONE",
+experiment_names = {"PONE":"P-ONE (IP)",
                     "KM3":"KM3NeT",
                     "IC":"IceCube",}
 baseline_list = {"PONE":PONE_BASELINE,

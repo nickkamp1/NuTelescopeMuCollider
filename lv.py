@@ -375,22 +375,38 @@ def lat_long_to_cartesian(lat,long):
     return np.array([x,y,z]).T
     
 def directional_vector(experiment):
-    lat = latitude_list[experiment]
-    long = longitude_list[experiment]
-    start = lat_long_to_cartesian(fermi_lat,fermi_long)
+
+    lat = latitude_list[experiment]*np.pi/180 # detector site
+    long = longitude_list[experiment]*np.pi/180 # detector site
+    flat = fermi_lat*np.pi/180 # source site
+    flong = fermi_long*np.pi/180 # source site
+    chi = np.pi/2 - lat
+    
+    start = lat_long_to_cartesian(flat,flong)
     end = lat_long_to_cartesian(lat,long)
     direction = end - start
-    theta = np.arccos(np.dot(start,direction)/(np.linalg.norm(start)*np.linalg.norm(direction)))
-    e = np.array([-np.sin(fermi_long),np.cos(fermi_long),0]) # east vector at beam
-    n = np.array([-np.cos(fermi_lat)*np.cos(fermi_long), -np.cos(lat)*np.sin(fermi_long), np.sin(fermi_lat)]) # north vector at beam
-    vxy = direction - (np.dot(start,direction)/np.dot(start,start))*start
-    cosphi = np.dot(vxy,-n)/np.linalg.norm(vxy)
-    sinphi = np.dot(vxy,e)/np.linalg.norm(vxy)
-    chi = np.pi/180 * (90 - lat) # colatitude
-    Nx = np.cos(chi)*np.sin(theta)*cosphi + np.sin(chi)*np.cos(theta)
-    Ny = np.sin(theta)*sinphi
-    Nz = -np.sin(chi)*np.sin(theta)*cosphi + np.cos(chi)*np.cos(theta)
+    direction /= np.linalg.norm(direction)
+    # compute unit vectors in which z = up, y = east, x = south
+    x = np.array([-np.sin(lat)*np.cos(long),
+                  -np.sin(lat)*np.sin(long),
+                  np.cos(lat)])
+    y = np.array([-np.sin(long),
+                  np.cos(long),
+                  0])
+    z = np.array([np.cos(lat)*np.cos(long),
+                  np.cos(lat)*np.sin(long),
+                  np.sin(lat)])
+    nx = np.dot(direction,x)
+    ny = np.dot(direction,y)
+    nz = np.dot(direction,z)
+    theta = np.arccos(nz)
+    phi = np.arctan2(ny,nx)
+    Nx = np.cos(chi)*np.sin(theta)*np.cos(phi) + np.sin(chi)*np.cos(theta)
+    Ny = np.sin(theta)*np.sin(phi)
+    Nz = -np.sin(chi)*np.sin(theta)*np.cos(phi) + np.cos(chi)*np.cos(theta)
+
     return np.array([Nx,Ny,Nz])
+    
 
 def osc_prob(L,RA,
              C=0,
