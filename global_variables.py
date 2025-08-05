@@ -43,17 +43,17 @@ alpha = ((90 - fermi_lat)/2)*np.pi/180
 # IceCube Geometry
 ICECUBE_lat = -90
 ICECUBE_long = 0 # arbitrary
-ICECUBE_BASELINE = np.sqrt(2*R_earth**2*(1 - np.cos((90+fermi_lat)*np.pi/180)))*1e3 # meters
+ICECUBE_BASELINE = 11632.634296394386 # old calc: np.sqrt(2*R_earth**2*(1 - np.cos((90+fermi_lat)*np.pi/180)))*1e3 # meters
 
 # PONE Geometry
 PONE_lat = 47.52
 PONE_long = -131.61
-PONE_BASELINE = 1758*1.60934*1e3
+PONE_BASELINE = 3397.563176065286 # old calc: 1758*1.60934*1e3
 
 # KM3NeT Geometry
 KM3NeT_lat = 36.27
 KM3NeT_long = 16.10
-KM3NeT_BASELINE = 4427*1.60934*1e3
+KM3NeT_BASELINE = 7826.234266538951 # old calc: 4427*1.60934*1e3
 
 # MINOS ND Geometry as a check
 MINOS_lat = 41.8405556
